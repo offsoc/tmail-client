@@ -30,7 +30,7 @@ class ThreadDetailApi {
       GetThreadResponse.deserialize,
     );
 
-    return getThreadResponse?.list.firstWhereOrNull(
+    return getThreadResponse!.list.firstWhereOrNull(
       (thread) => thread.id == threadId,
     )?.emailIds ?? [];
   }

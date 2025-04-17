@@ -28,6 +28,7 @@ class EmailViewAppBarWidget extends StatelessWidget {
   final VoidCallback onBackAction;
   final OnEmailActionClick? onEmailActionClick;
   final OnMoreActionClick? onMoreActionClick;
+  final bool supportBackAction;
 
   EmailViewAppBarWidget({
     Key? key,
@@ -38,6 +39,7 @@ class EmailViewAppBarWidget extends StatelessWidget {
     this.onEmailActionClick,
     this.onMoreActionClick,
     this.optionsWidget,
+    this.supportBackAction = true,
   }) : super(key: key);
 
   @override
@@ -64,7 +66,7 @@ class EmailViewAppBarWidget extends StatelessWidget {
           color: EmailViewAppBarWidgetStyles.backgroundColor,
         ),
         child: Row(children: [
-          if (_supportDisplayMailboxNameTitle(context))
+          if (_supportDisplayMailboxNameTitle(context) && supportBackAction)
             EmailViewBackButton(
               imagePaths: _imagePaths,
               onBackAction: onBackAction,

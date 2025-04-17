@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:core/presentation/constants/constants_ui.dart';
 import 'package:core/presentation/extensions/color_extension.dart';
 import 'package:core/presentation/views/button/tmail_button_widget.dart';
@@ -40,50 +42,64 @@ import 'package:tmail_ui_user/main/localizations/app_localizations.dart';
 import 'package:tmail_ui_user/main/routes/route_navigation.dart';
 import 'package:tmail_ui_user/main/utils/app_utils.dart';
 
+class _OptionalExpanded extends StatelessWidget {
+  const _OptionalExpanded({required this.expandedEnabled, required this.child});
+
+  final bool expandedEnabled;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return expandedEnabled ? Expanded(child: child) : child;
+  }
+}
+
+class _OptionalScroll extends StatelessWidget {
+  const _OptionalScroll({required this.scrollEnabled, required this.child});
+
+  final bool scrollEnabled;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return scrollEnabled
+      ? SingleChildScrollView(
+          physics : const ClampingScrollPhysics(),
+          child: child,
+        )
+      : child;
+  }
+}
+
 class EmailView extends GetWidget<SingleEmailController> {
 
-  const EmailView({Key? key}) : super(key: key);
+  const EmailView({super.key, this.presentationEmail});
+
+  final PresentationEmail? presentationEmail;
+  
+  @override
+  String? get tag => presentationEmail?.id?.id.value;
+
+  bool get isInsideThreadDetailView => tag != null;
 
   @override
   Widget build(BuildContext context) {
     return SelectionArea(
-      child: Scaffold(
-        backgroundColor: controller.responsiveUtils.isWebDesktop(context)
+      child: ColoredBox(
+        color: controller.responsiveUtils.isWebDesktop(context)
           ? AppColor.colorBgDesktop
           : Colors.white,
-        appBar: PlatformInfo.isIOS
-          ? PreferredSize(
-              preferredSize: const Size(double.infinity, 100),
-              child: Obx(() {
-                if (controller.currentEmail != null) {
-                  return SafeArea(
-                    top: false,
-                    bottom: false,
-                    child: EmailViewAppBarWidget(
-                      key: const Key('email_view_app_bar_widget'),
-                      presentationEmail: controller.currentEmail!,
-                      mailboxContain: _getMailboxContain(controller.currentEmail!),
-                      isSearchActivated: controller.mailboxDashBoardController.searchController.isSearchEmailRunning,
-                      onBackAction: () => controller.closeEmailView(context: context),
-                      onEmailActionClick: (email, action) => controller.handleEmailAction(context, email, action),
-                      onMoreActionClick: (presentationEmail, position) => _handleMoreEmailAction(context: context, presentationEmail: presentationEmail, position: position)
-                    ),
-                  );
-                } else {
-                  return const SizedBox.shrink();
-                }
-              })
-            )
-          : null,
-        body: SafeArea(
+        child: SafeArea(
           right: controller.responsiveUtils.isLandscapeMobile(context),
           left: controller.responsiveUtils.isLandscapeMobile(context),
           bottom: !PlatformInfo.isIOS,
           child: Container(
             clipBehavior: Clip.antiAlias,
             decoration: controller.responsiveUtils.isWebDesktop(context)
-              ? const BoxDecoration(
-                  borderRadius: BorderRadius.all(Radius.circular(20)),
+              ? BoxDecoration(
+                  borderRadius: isInsideThreadDetailView
+                    ? null
+                    : const BorderRadius.all(Radius.circular(20)),
                   color: Colors.white)
               : const BoxDecoration(color: Colors.white),
             margin: _getMarginEmailView(context),
@@ -91,19 +107,19 @@ class EmailView extends GetWidget<SingleEmailController> {
               final currentEmail = controller.currentEmail;
               if (currentEmail != null) {
                 return Column(children: [
-                  if (!PlatformInfo.isIOS)
-                    Obx(() => EmailViewAppBarWidget(
-                      key: const Key('email_view_app_bar_widget'),
-                      presentationEmail: currentEmail,
-                      mailboxContain: _getMailboxContain(currentEmail),
-                      isSearchActivated: controller.mailboxDashBoardController.searchController.isSearchEmailRunning,
-                      onBackAction: () => controller.closeEmailView(context: context),
-                      onEmailActionClick: (email, action) => controller.handleEmailAction(context, email, action),
-                      onMoreActionClick: (presentationEmail, position) => _handleMoreEmailAction(context: context, presentationEmail: presentationEmail, position: position),
-                      optionsWidget: PlatformInfo.isWeb && controller.emailSupervisorController.supportedPageView.isTrue
-                        ? _buildNavigatorPageViewWidgets(context)
-                        : null,
-                    )),
+                  Obx(() => EmailViewAppBarWidget(
+                    key: const Key('email_view_app_bar_widget'),
+                    presentationEmail: currentEmail,
+                    mailboxContain: _getMailboxContain(currentEmail),
+                    isSearchActivated: controller.mailboxDashBoardController.searchController.isSearchEmailRunning,
+                    onBackAction: () => controller.closeEmailView(context: context),
+                    onEmailActionClick: (email, action) => controller.handleEmailAction(context, email, action),
+                    onMoreActionClick: (presentationEmail, position) => _handleMoreEmailAction(context: context, presentationEmail: presentationEmail, position: position),
+                    optionsWidget: PlatformInfo.isWeb && controller.emailSupervisorController.supportedPageView.isTrue
+                      ? _buildNavigatorPageViewWidgets(context)
+                      : null,
+                    supportBackAction: !isInsideThreadDetailView,
+                  )),
                   Obx(() {
                     final vacation = controller.mailboxDashBoardController.vacationResponse.value;
                     if (vacation?.vacationResponderIsValid == true &&
@@ -123,7 +139,8 @@ class EmailView extends GetWidget<SingleEmailController> {
                       return const SizedBox.shrink();
                     }
                   }),
-                  Expanded(
+                  _OptionalExpanded(
+                    expandedEnabled: !isInsideThreadDetailView,
                     child: LayoutBuilder(builder: (context, constraints) {
                       return Obx(() {
                         bool supportedPageView = controller.emailSupervisorController.supportedPageView.isTrue && PlatformInfo.isMobile;
@@ -139,8 +156,8 @@ class EmailView extends GetWidget<SingleEmailController> {
                             itemBuilder: (context, index) {
                               final currentEmail = currentListEmail[index];
                               if (PlatformInfo.isMobile) {
-                                return SingleChildScrollView(
-                                  physics : const ClampingScrollPhysics(),
+                                return _OptionalScroll(
+                                  scrollEnabled: !isInsideThreadDetailView,
                                   child: Container(
                                     width: double.infinity,
                                     alignment: Alignment.center,
@@ -159,8 +176,8 @@ class EmailView extends GetWidget<SingleEmailController> {
                                   if (currentEmail.hasCalendarEvent && calendarEvent != null) {
                                     return Padding(
                                       padding: const EdgeInsetsDirectional.symmetric(horizontal: 4),
-                                      child: SingleChildScrollView(
-                                        physics : const ClampingScrollPhysics(),
+                                      child: _OptionalScroll(
+                                        scrollEnabled: !isInsideThreadDetailView,
                                         child: Container(
                                           width: double.infinity,
                                           alignment: Alignment.center,
@@ -187,8 +204,8 @@ class EmailView extends GetWidget<SingleEmailController> {
                           );
                         } else {
                           if (PlatformInfo.isMobile) {
-                            return SingleChildScrollView(
-                              physics : const ClampingScrollPhysics(),
+                            return _OptionalScroll(
+                              scrollEnabled: !isInsideThreadDetailView,
                               child: Container(
                                 width: double.infinity,
                                 alignment: Alignment.center,
@@ -207,8 +224,8 @@ class EmailView extends GetWidget<SingleEmailController> {
                               if (currentEmail.hasCalendarEvent && calendarEvent != null) {
                                 return Padding(
                                   padding: const EdgeInsetsDirectional.symmetric(horizontal: 4),
-                                  child: SingleChildScrollView(
-                                    physics : const ClampingScrollPhysics(),
+                                  child: _OptionalScroll(
+                                    scrollEnabled: !isInsideThreadDetailView,
                                     child: Container(
                                       width: double.infinity,
                                       alignment: Alignment.center,
@@ -396,7 +413,8 @@ class EmailView extends GetWidget<SingleEmailController> {
               final allEmailContents = controller.emailContents.value ?? '';
 
               if (PlatformInfo.isWeb) {
-                return Expanded(
+                return _OptionalExpanded(
+                  expandedEnabled: !isInsideThreadDetailView,
                   child: Padding(
                     padding: EmailViewStyles.emailContentPadding,
                     child: LayoutBuilder(builder: (context, constraints) {
@@ -404,8 +422,9 @@ class EmailView extends GetWidget<SingleEmailController> {
                         return Stack(
                           children: [
                             HtmlContentViewerOnWeb(
+                              key: ValueKey(tag),
                               widthContent: constraints.maxWidth,
-                              heightContent: constraints.maxHeight,
+                              heightContent: min(constraints.maxHeight, 200),
                               contentHtml: allEmailContents,
                               mailtoDelegate: controller.openMailToLink,
                               direction: AppUtils.getCurrentDirection(context),

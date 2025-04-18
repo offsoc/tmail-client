@@ -18,6 +18,12 @@ class CozyConfig {
 
   final manager = CozyConfigManager();
 
+  bool? _isInsideCozy;
+
+  Future<bool> get isInsideCozy async {
+    return _isInsideCozy ?? await manager.isInsideCozy;
+  }
+
   Future<List<CozyContact>> getCozyContacts() async {
     try {
       final contacts = await promiseToFuture(getContactsJs());

@@ -213,7 +213,9 @@ class SearchInputFormWidget extends StatelessWidget with AppLoaderMixin {
     return QuickSearchTextFieldConfiguration(
       controller: _searchController.searchInputController,
       focusNode: _searchController.searchFocus,
-      style: TextStyle(fontSize: fontSize),
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+        fontSize: fontSize,
+      ),
       textInputAction: TextInputAction.done,
       cursorColor: AppColor.primaryColor,
       textDirection: DirectionUtils.getDirectionByLanguage(context),
@@ -224,8 +226,14 @@ class SearchInputFormWidget extends StatelessWidget with AppLoaderMixin {
         enabledBorder: InputBorder.none,
         contentPadding: contentPadding,
         hintText: AppLocalizations.of(context).search_emails,
-        hintStyle: TextStyle(color: AppColor.colorHintSearchBar, fontSize: fontSize),
-        labelStyle: TextStyle(color: Colors.black, fontSize: fontSize),
+        hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: AppColor.colorHintSearchBar,
+          fontSize: fontSize,
+        ),
+        labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: Colors.black,
+          fontSize: fontSize,
+        ),
       ),
       leftButton: Padding(
         padding: const EdgeInsetsDirectional.only(start: 8),

@@ -61,16 +61,16 @@ class MailboxDashBoardView extends BaseMailboxDashBoardView {
                 child: Container(
                   color: AppColor.colorBgDesktop,
                   child: Column(children: [
-                    Obx(() {
-                      final accountId = controller.accountId.value;
+                    FutureBuilder(
+                      future: CozyConfig().isInsideCozy,
+                      builder: (context, snapshot) {
+                        if (snapshot.data == true) {
+                          return const SizedBox.shrink();
+                        }
 
-                      return FutureBuilder(
-                        future: CozyConfig().manager.isInsideCozy,
-                        builder: (context, snapshot) {
-                          if (snapshot.data == true) {
-                            return const SizedBox.shrink();
-                          }
-
+                        return Obx(() {
+                          final accountId = controller.accountId.value;
+                        
                           return NavigationBarWidget(
                             imagePaths: controller.imagePaths,
                             accountId: accountId,
@@ -86,23 +86,21 @@ class MailboxDashBoardView extends BaseMailboxDashBoardView {
                             onTapContactSupportAction: (contactSupport) =>
                                 controller.onGetHelpOrReportBug(contactSupport),
                           );
-                        }
-                      );
-                    }),
+                        });
+                      }
+                    ),
                     Expanded(child: Row(children: [
                       Column(children: [
                         FutureBuilder(
-                          future: CozyConfig().manager.isInsideCozy,
+                          future: CozyConfig().isInsideCozy,
                           builder: (context, snapshot) {
-                            final buttonPadding = snapshot.data == true
-                              ? const EdgeInsetsDirectional.symmetric(vertical: 10)
-                              : const EdgeInsetsDirectional.symmetric(vertical: 8);
-
                             return ComposeButtonWidget(
                               imagePaths: controller.imagePaths,
                               onTapAction: () =>
                                 controller.openComposer(ComposerArguments()),
-                              buttonPadding: buttonPadding,
+                              buttonPadding: snapshot.data == true
+                                ? const EdgeInsetsDirectional.symmetric(vertical: 10)
+                                : const EdgeInsetsDirectional.symmetric(vertical: 8),
                             );
                           }
                         ),
@@ -122,7 +120,7 @@ class MailboxDashBoardView extends BaseMailboxDashBoardView {
                       Expanded(child: Column(children: [
                         const SizedBox(height: 16),
                         FutureBuilder(
-                          future: CozyConfig().manager.isInsideCozy,
+                          future: CozyConfig().isInsideCozy,
                           builder: (context, snapshot) {
                             if (snapshot.data != true) {
                               return const SizedBox.shrink();

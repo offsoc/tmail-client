@@ -21,7 +21,7 @@ class CozyConfig {
   bool? _isInsideCozy;
 
   Future<bool> get isInsideCozy async {
-    return _isInsideCozy ?? await manager.isInsideCozy;
+    return _isInsideCozy ??= await manager.isInsideCozy;
   }
 
   Future<List<CozyContact>> getCozyContacts() async {
